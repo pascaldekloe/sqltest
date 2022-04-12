@@ -1,5 +1,7 @@
-// Package sqltest provides convenience with integration testing.
-// Tests using this package are skipped go test -short
+// Package sqltest provides utilities for integration tests.
+//
+// Tests can run isolated in a dedicated transaction. An automated rollback
+// after each test keeps the data consistent and/or clean.
 package sqltest
 
 import (
@@ -9,10 +11,12 @@ import (
 	"testing"
 )
 
+// argument values for sql.Open
 var driverName, dataSourceName string
 
-// Setup sets the data source configuration
-// with a driver name and a connect string.
+// Setup configures a database specified by its database driver name and a
+// driver-specific data source name, usually consisting of at least a database
+// name and connection information.
 func Setup(driver, dataSource string) {
 	driverName = driver
 	dataSourceName = dataSource
@@ -20,8 +24,8 @@ func Setup(driver, dataSource string) {
 
 var driverNameVar, dataSourceNameVar string
 
-// EnvSetup causes the data source configuration to be read from
-// environment variables (if the respective name is not empty).
+// EnvSetup configures the datasource with environment variables. When the
+// respective variable (name) is present then its value overrides Setup.
 func EnvSetup(driverVar, dataSourceVar string) {
 	driverNameVar = driverVar
 	dataSourceNameVar = dataSourceVar
@@ -60,8 +64,8 @@ func getDB(t *testing.T) *sql.DB {
 	return dB
 }
 
-// NewTx returns a transaction with automatic rollback after the test
-// and its subtests complete. The test is skipped when in short mode.
+// NewTx returns a transaction with an automated rollback that fires after the
+// test and its subtests complete. The test is skipped when in short mode.
 func NewTx(t *testing.T) *sql.Tx {
 	t.Helper()
 
