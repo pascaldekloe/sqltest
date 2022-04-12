@@ -1,22 +1,26 @@
 # SQL Test
 
-… convenience library for the Go programming language.
+… convenience library for the Go programming language. Tests can run isolated in
+a dedicated transaction. An automated rollback after each test keeps the data
+consistent and/or clean.
 
 [![API](https://pkg.go.dev/badge/github.com/pascaldekloe/sqltest.svg)](https://pkg.go.dev/github.com/pascaldekloe/sqltest)
 
 ```go
 func init() {
-	// fix driver to PostgreSQL
-	sqltest.Setup("postgres", "")
-	// read connect string from an environment variable
+	// database configuration
+	sqltest.Setup("pxg", "host=localhost user=test database=postgres")
+	// optional connect string override with an environment variable
 	sqltest.EnvSetup("", "TEST_CONNECT_STRING")
 }
 
-func TestFoo(t *testing.T) {
-	// install connection in package
-	DBExec = sqltest.NewTx(t).Exec
+func TestWithSQLInteraction(t *testing.T) {
+	db := sqltest.NewTx(t)
+	// install package variables
+	DBExec = db.ExecContext
+	DBQuery = db.QueryContext
 
-	…
+	// test …
 
 	// automatic rollback
 }
