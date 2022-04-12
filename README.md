@@ -2,6 +2,8 @@
 
 … convenience library for the Go programming language.
 
+[![API](https://pkg.go.dev/badge/github.com/pascaldekloe/sqltest.svg)](https://pkg.go.dev/github.com/pascaldekloe/sqltest)
+
 ```go
 func init() {
 	// fix driver to PostgreSQL
