@@ -33,21 +33,35 @@ func EnvSetup(driverVar, dataSourceVar string) {
 
 func connect(t *testing.T) *sql.DB {
 	if driverNameVar != "" {
-		driverName = os.Getenv(driverNameVar)
-		if driverName == "" {
-			t.Fatalf("sqltest: need environment variable %q (with a driver name)", driverNameVar)
+		s, ok := os.LookupEnv(driverNameVar)
+		if !ok {
+			if driverName == "" {
+				t.Fatalf("sqltest: need environment variable %q (with a driver name)", driverNameVar)
+			}
+		} else {
+			if driverName != "" {
+				t.Logf("sqltest: driver %q override with environment variable %q", driverName, driverNameVar)
+			}
+			driverName = s
 		}
 	}
 	if dataSourceNameVar != "" {
-		dataSourceName = os.Getenv(dataSourceNameVar)
-		if dataSourceName == "" {
-			t.Fatalf("sqltest: need environment variable %q (with a connect string)", dataSourceNameVar)
+		s, ok := os.LookupEnv(dataSourceNameVar)
+		if !ok {
+			if dataSourceName == "" {
+				t.Fatalf("sqltest: need environment variable %q (with a data source name)", dataSourceNameVar)
+			}
+		} else {
+			if dataSourceName != "" {
+				t.Logf("sqltest: data source %q override with environment variable %q", dataSourceName, dataSourceNameVar)
+			}
+			dataSourceName = s
 		}
 	}
 
 	d, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
-		t.Fatalf("sqltest: %q on %q unavailable: %s", dataSourceName, driverName, err)
+		t.Fatalf("sqltest: driver %q datasource %q unavailable: %s", driverName, dataSourceName, err)
 	}
 	return d
 }
