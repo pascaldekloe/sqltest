@@ -4,6 +4,9 @@
 // after each test keeps the data consistent and/or clean.
 package sqltest
 
+// BUG(pascaldekloe): DDL on MySQL causes an an implicit commit, which breaks
+// the automated rollback.
+
 import (
 	"database/sql"
 	"os"
