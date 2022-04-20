@@ -9,7 +9,7 @@ consistent and/or clean.
 ```go
 func init() {
 	// database configuration
-	sqltest.Setup("pxg", "host=localhost user=test database=postgres")
+	sqltest.Setup("pgx", "host=localhost user=test database=postgres")
 	// optional connect string override with an environment variable
 	sqltest.EnvSetup("", "TEST_CONNECT_STRING")
 }
