@@ -4,9 +4,6 @@
 // after each test keeps the data consistent and/or clean.
 package sqltest
 
-// BUG(pascaldekloe): DDL on MySQL causes an an implicit commit, which breaks
-// the automated rollback.
-
 import (
 	"database/sql"
 	"os"
@@ -34,37 +31,44 @@ func EnvSetup(driverVar, dataSourceVar string) {
 	dataSourceNameVar = dataSourceVar
 }
 
-func connect(t *testing.T) *sql.DB {
+// Open returns a new connection to the database. Use NewTx instead if possible.
+func Open(tb testing.TB) *sql.DB {
+	tb.Helper()
+
+	driver := driverName
+	dataSource := dataSourceName
+
 	if driverNameVar != "" {
 		s, ok := os.LookupEnv(driverNameVar)
 		if !ok {
-			if driverName == "" {
-				t.Fatalf("sqltest: need environment variable %q (with a driver name)", driverNameVar)
+			if driver == "" {
+				tb.Fatalf("sqltest: need environment variable %q (with a driver name)", driverNameVar)
 			}
 		} else {
-			if driverName != "" {
-				t.Logf("sqltest: driver %q override with environment variable %q", driverName, driverNameVar)
+			if driver != "" {
+				tb.Logf("sqltest: driver %q override with environment variable %q", driver, driverNameVar)
 			}
-			driverName = s
-		}
-	}
-	if dataSourceNameVar != "" {
-		s, ok := os.LookupEnv(dataSourceNameVar)
-		if !ok {
-			if dataSourceName == "" {
-				t.Fatalf("sqltest: need environment variable %q (with a data source name)", dataSourceNameVar)
-			}
-		} else {
-			if dataSourceName != "" {
-				t.Logf("sqltest: data source %q override with environment variable %q", dataSourceName, dataSourceNameVar)
-			}
-			dataSourceName = s
+			driver = s
 		}
 	}
 
-	d, err := sql.Open(driverName, dataSourceName)
+	if dataSourceNameVar != "" {
+		s, ok := os.LookupEnv(dataSourceNameVar)
+		if !ok {
+			if dataSource == "" {
+				tb.Fatalf("sqltest: need environment variable %q (with a data source name)", dataSourceNameVar)
+			}
+		} else {
+			if dataSource != "" {
+				tb.Logf("sqltest: data source %q override with environment variable %q", dataSource, dataSourceNameVar)
+			}
+			dataSource = s
+		}
+	}
+
+	d, err := sql.Open(driver, dataSource)
 	if err != nil {
-		t.Fatalf("sqltest: driver %q datasource %q unavailable: %s", driverName, dataSourceName, err)
+		tb.Fatalf("sqltest: driver %q datasource %q unavailable: %s", driver, dataSource, err)
 	}
 	return d
 }
@@ -76,13 +80,16 @@ func getDB(t *testing.T) *sql.DB {
 	dBMutex.Lock()
 	defer dBMutex.Unlock()
 	if dB == nil {
-		dB = connect(t)
+		dB = Open(t)
 	}
 	return dB
 }
 
 // NewTx returns a transaction with an automated rollback that fires after the
 // test and its subtests complete. The test is skipped when in short mode.
+//
+// BUG(pascaldekloe): DDL on MySQL causes an an implicit commit, which breaks
+// the automated rollback.
 func NewTx(t *testing.T) *sql.Tx {
 	t.Helper()
 
